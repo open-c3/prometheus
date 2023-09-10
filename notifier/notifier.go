@@ -525,6 +525,26 @@ func (n *Manager) sendAll(alerts ...*Alert) bool {
 			defer cancel()
 
 			go func(client *http.Client, url string) {
+				level.Debug(n.logger).Log("msg", "Start sending alert api", "url", url, "data", payload )
+
+				var data []map[string]interface{}
+				err := json.Unmarshal([]byte(payload), &data)
+
+				if err != nil {
+					level.Error(n.logger).Log("msg", "Start sending alert one", "info", "JSON Marshal fail", "err", err)
+				} else {
+
+				        for _, item := range data {
+						jsonString, err := json.Marshal(item)
+						if err != nil {
+							level.Error(n.logger).Log("msg", "Start sending alert one", "info", "JSON Marshal fail", "err", err)
+							continue
+						}
+						level.Debug(n.logger).Log("msg", "Start sending alert one", "url", url, "data", string(jsonString) )
+					}
+
+				}
+
 				if err := n.sendOne(ctx, client, url, payload); err != nil {
 					level.Error(n.logger).Log("alertmanager", url, "count", len(alerts), "msg", "Error sending alert", "err", err)
 					n.metrics.errors.WithLabelValues(url).Inc()
